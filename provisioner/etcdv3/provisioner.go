@@ -72,7 +72,7 @@ func (p *Provisioner) Provision(_ context.Context, ui packer.Ui, _ packer.Commun
 		}
 		ui.Message("Value retrieved: " + val)
 
-	case "del":
+	case "delete":
 		err := etcdv3.Del(cli, p.config.Key)
 		if err != nil {
 			ui.Error("Failed to DELETE key: " + err.Error())

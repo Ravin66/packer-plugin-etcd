@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	// "github.com/hashicorp/packer-plugin-scaffolding/builder/scaffolding"
-	// scaffoldingData "github.com/hashicorp/packer-plugin-scaffolding/datasource/scaffolding"
-
 	ppdv3 "github.com/ravin66/packer-plugin-etcd/post-processor/etcdv3"
 	provv3 "github.com/ravin66/packer-plugin-etcd/provisioner/etcdv3"
 
