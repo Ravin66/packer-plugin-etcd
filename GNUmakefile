@@ -1,4 +1,4 @@
-NAME=scaffolding
+NAME=etcd
 BINARY=packer-plugin-${NAME}
 
 COUNT?=1
