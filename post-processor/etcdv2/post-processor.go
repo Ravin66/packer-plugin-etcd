@@ -1,3 +1,8 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
+//go:generate packer-sdc mapstructure-to-hcl2 -type Config
+
 package postprocessor
 
 import (
@@ -35,7 +40,7 @@ func (p *PostProcessor) ConfigSpec() hcldec.ObjectSpec { return p.config.FlatMap
 
 func (p *PostProcessor) Configure(raws ...interface{}) error {
 	err := config.Decode(&p.config, &config.DecodeOpts{
-		PluginType:         "packer.post-processor.scaffolding",
+		PluginType:         "packer.post-processor.etcd",
 		Interpolate:        true,
 		InterpolateContext: &p.config.ctx,
 		InterpolateFilter: &interpolate.RenderFilter{
@@ -99,7 +104,7 @@ func (p *PostProcessor) PostProcess(ctx context.Context, ui packersdk.Ui, source
 		}
 		ui.Message("Value retrieved: " + val)
 
-	case "del":
+	case "delete":
 		err := etcdv2.Del(eApi, p.config.Key)
 		if err != nil {
 			ui.Error("Failed to delete key: " + err.Error())

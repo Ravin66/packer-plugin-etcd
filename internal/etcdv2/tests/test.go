@@ -1,33 +1,39 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"log"
+	"strings"
 
-	clientv2 "github.com/ravin66/packer-plugin-etcd/internal/etcdv2"
+	"github.com/ravin66/packer-plugin-etcd/internal/etcdv2"
 )
 
 func main() {
-	cli, err := clientv2.Connect([]string{"http://192.168.0.13:2379"})
+	inputKeys := flag.String("keys", "", "Comma-separtated list of keys.")
+	etcdhost := flag.String("etcdHost", "", "Etcd Hostname to get keys.")
+	flag.Parse()
+
+	cfg := etcdv2.EtcdOptions{
+		Endpoints: []string{*etcdhost},
+	}
+
+	eApi, err := etcdv2.Connect(cfg)
+
 	if err != nil {
-		log.Fatalf("Connection error: %v", err)
-	}
-	kapi := clientv2.NewKeysAPI(cli)
-
-	key := "/example/key"
-	value := "hello etcdv2"
-
-	if err := setKey(kapi, key, value); err != nil {
-		log.Fatalf("Set error: %v", err)
+		fmt.Errorf(err.Error())
 	}
 
-	val, err := getKey(kapi, key)
-	if err != nil {
-		log.Fatalf("Get error: %v", err)
-	}
-	fmt.Printf("Value retrieved: %s\n", val)
+	keys := strings.Split(*inputKeys, ",")
 
-	if err := deleteKey(kapi, key); err != nil {
-		log.Fatalf("Delete error: %v", err)
+	for _, key := range keys {
+		// fmt.Printf(key)
+		value, err := etcdv2.Get(eApi, key)
+
+		if err != nil {
+			fmt.Printf("Failed to get key: %v", err)
+		} else {
+			fmt.Printf("Key: %s - Value %s\n", key, value)
+		}
 	}
+
 }
