@@ -30,7 +30,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 	s := map[string]hcldec.Spec{
 		"endpoint": &hcldec.AttrSpec{Name: "endpoint", Type: cty.String, Required: true},
 		"key":      &hcldec.AttrSpec{Name: "key", Type: cty.String, Required: true},
-		"value":    &hcldec.AttrSpec{Name: "value", Type: cty.String, Required: true},
+		"value":    &hcldec.AttrSpec{Name: "value", Type: cty.String, Required: false},
 		"method":   &hcldec.AttrSpec{Name: "method", Type: cty.String, Required: true},
 	}
 	return s
