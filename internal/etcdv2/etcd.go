@@ -1,24 +1,47 @@
 package etcdv2
 
 import (
+	"context"
+	"log"
 	"time"
 
 	clientv2 "go.etcd.io/etcd/client/v2"
-	"golang.org/x/net/context"
 )
 
-func Connect(endpoints []string) (*clientv2.Client, error) {
+type EtcdOptions struct {
+	Endpoints []string
+	Username  string
+	Password  string
+	UseAuth   bool
+}
+
+func Connect(config EtcdOptions) (clientv2.KeysAPI, error) {
+
 	cfg := clientv2.Config{
-		Endpoints:               endpoints,
+		Endpoints:               config.Endpoints,
 		Transport:               clientv2.DefaultTransport,
 		HeaderTimeoutPerRequest: 5 * time.Second,
 	}
 
-	return clientv2.New(cfg)
+	if config.UseAuth == true && (config.Username != "" || config.Password != "") {
+		cfg.Username = config.Username
+		cfg.Password = config.Password
+	} else if config.UseAuth == true && (config.Username == "" || config.Password == "") {
+		log.Fatal("Use Auth has been set to true but no username or password provided.")
+	}
+
+	cli, err := clientv2.New(cfg)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return clientv2.NewKeysAPI(cli), nil
 }
 
-func Set(kapi clientv2.KeysAPI, key, value string) error {
-	_, err := kapi.Set(context.Background(), key, value, nil)
+func Put(api clientv2.KeysAPI, key, value string) error {
+	_, err := api.Set(context.Background(), key, value, nil)
+
 	return err
 }
 
