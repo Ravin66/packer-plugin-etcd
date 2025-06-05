@@ -1,20 +1,59 @@
-name: Build
-on: 
-    push:
-        tags:
-            - 'v*'
+name: Release Packer Build
 
-permissions:
-    contents: write
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Trigger on version tags like v1.2.3
 
 jobs:
-    go-release:
-        runs-on: [self-hosted, linux]
-        steps:
-            - uses: actions/checkout@v4
-              with:
-                fetch-depth: 0
-            - uses: actions/setup-go
-              with:
-                go-version-file: 'go.mod'
-                cache: true
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: [amd64, arm64]
+        exclude:
+          - goos: windows
+            goarch: arm64  # Skip unsupported combo
+    name: Build ${{ matrix.goos }}-${{ matrix.goarch }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.0'
+
+      - name: Build binary
+        run: |
+          mkdir -p dist
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o dist/packer-${{ matrix.goos }}-${{ matrix.goarch }}
+
+      - name: Compress binary
+        run: |
+          cd dist
+          tar -czf packer-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz packer-${{ matrix.goos }}-${{ matrix.goarch }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: packer-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/packer-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./dist
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: dist/**/*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
