@@ -59,14 +59,6 @@ func (p *PostProcessor) PostProcess(ctx context.Context, ui packersdk.Ui, source
 		Endpoints: []string{p.config.Endpoint},
 	}
 
-	if p.config.Username != "" {
-		cfg.UseAuth = true
-		cfg.Password = p.config.Password
-		cfg.Username = p.config.Username
-	} else {
-		cfg.UseAuth = false
-	}
-
 	// Check to see if environment variables are set and override
 	if os.Getenv("ETCD_USERNAME") != "" {
 		cfg.UseAuth = true
@@ -77,6 +69,16 @@ func (p *PostProcessor) PostProcess(ctx context.Context, ui packersdk.Ui, source
 		cfg.Password = os.Getenv("ETCD_PASSWORD")
 	}
 
+	// Check if the username is configured in packer.  This will override the environment variable.
+	if p.config.Username != "" {
+		cfg.UseAuth = true
+		cfg.Password = p.config.Password
+		cfg.Username = p.config.Username
+	} else {
+		cfg.UseAuth = false
+	}
+
+	// Connect to etcdv2
 	eApi, err := etcdv2.Connect(cfg)
 
 	if err != nil {

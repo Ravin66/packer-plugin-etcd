@@ -22,20 +22,20 @@ build {
 
   post-processor "etcd-etcdv2" {
     endpoint = local.etcdhost
-    key      = "/ref/ip"
+    key      = "post-processor"
     value    = "127.0.0.1"
     method   = "put"
   }
 
   post-processor "etcd-etcdv2" {
     endpoint = local.etcdhost
-    key      = "/ref/ip"
+    key      = "post-processor"
     method   = "get"
   }
 
   post-processor "etcd-etcdv2" {
     endpoint = local.etcdhost
-    key      = "/ref/ip"
+    key      = "post-processor"
     method   = "delete"
   }
 }
