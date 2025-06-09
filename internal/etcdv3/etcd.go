@@ -8,12 +8,28 @@ import (
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
-func Connect(endpoints []string, timeout time.Duration) (*clientv3.Client, error) {
+type EtcdOptions struct {
+	Endpoints []string
+	Username  string
+	Password  string
+	UseAuth   bool
+}
 
-	cli, err := clientv3.New(clientv3.Config{
-		Endpoints:   endpoints,
-		DialTimeout: timeout,
-	})
+func Connect(config EtcdOptions) (*clientv3.Client, error) {
+
+	cfg := clientv3.Config{
+		Endpoints:   config.Endpoints,
+		DialTimeout: 5 * time.Second,
+	}
+
+	if config.UseAuth == true && (config.Username != "" || config.Password != "") {
+		cfg.Username = config.Username
+		cfg.Password = config.Password
+	} else if config.UseAuth == true && (config.Username == "" || config.Password == "") {
+		log.Fatal("Use Auth has been set to true but no username or password provided.")
+	}
+
+	cli, err := clientv3.New(cfg)
 
 	if err != nil {
 		log.Fatal(err)

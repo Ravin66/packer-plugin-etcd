@@ -3,8 +3,8 @@ package provisioner
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
-	"time"
 
 	"github.com/hashicorp/hcl/v2/hcldec"
 	"github.com/hashicorp/packer-plugin-sdk/packer"
@@ -18,6 +18,8 @@ type Config struct {
 	Key      string `mapstructure:"key"`
 	Value    string `mapstructure:"value"`
 	Method   string `mapstructure:"method"`
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
 
 	ctx interpolate.Context
 }
@@ -46,9 +48,32 @@ func (p *Provisioner) Prepare(raws ...interface{}) error {
 }
 
 func (p *Provisioner) Provision(_ context.Context, ui packer.Ui, _ packer.Communicator, generatedData map[string]interface{}) error {
-	// ui.Say(fmt.Sprintf("provisioner mock: %s", p.config.MockOption))
-	// return nil
-	cli, err := etcdv3.Connect([]string{p.config.Endpoint}, 5*time.Second)
+
+	cfg := etcdv3.EtcdOptions{
+		Endpoints: []string{p.config.Endpoint},
+	}
+
+	// Check to see if environment variables are set and override
+	if os.Getenv("ETCD_USERNAME") != "" {
+		cfg.UseAuth = true
+		cfg.Username = os.Getenv("ETCD_USERNAME")
+	}
+
+	if os.Getenv("ETCD_PASSWORD") != "" {
+		cfg.Password = os.Getenv("ETCD_PASSWORD")
+	}
+
+	// Check if the username is configured in packer.  This will override the environment variable.
+	if p.config.Username != "" {
+		cfg.UseAuth = true
+		cfg.Password = p.config.Password
+		cfg.Username = p.config.Username
+	} else {
+		cfg.UseAuth = false
+	}
+
+	cli, err := etcdv3.Connect(cfg)
+
 	if err != nil {
 		ui.Error("Failed to connect to etcd: " + err.Error())
 		return err

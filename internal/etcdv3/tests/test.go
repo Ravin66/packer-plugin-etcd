@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"strings"
-	"time"
 
 	clientv3 "github.com/ravin66/packer-plugin-etcd/internal/etcdv3"
 )
@@ -17,7 +16,11 @@ func main() {
 
 	keys := strings.Split(*inputKeys, ",")
 
-	cli, err := clientv3.Connect([]string{*etcdhost}, 5*time.Second)
+	cfg := clientv3.EtcdOptions{
+		Endpoints: []string{*etcdhost},
+	}
+
+	cli, err := clientv3.Connect(cfg)
 
 	if err != nil {
 		fmt.Errorf("Failed to connect to etcd: %v", err)
