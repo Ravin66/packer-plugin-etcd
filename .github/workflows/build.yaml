@@ -14,7 +14,7 @@ jobs:
         goarch: [amd64, arm64]
         exclude:
           - goos: windows
-            goarch: arm64  # Skip unsupported combo
+            goarch: arm64
     name: Build ${{ matrix.goos }}-${{ matrix.goarch }}
     steps:
       - name: Checkout code
@@ -25,21 +25,34 @@ jobs:
         with:
           go-version: '1.23.0'
 
+      - name: Extract tag version
+        id: version
+        run: echo "tag_version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
       - name: Build binary
         run: |
           mkdir -p dist
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o dist/packer-${{ matrix.goos }}-${{ matrix.goarch }}
+          EXT=""
+          if [ "${{ matrix.goos }}" == "windows" ]; then EXT=".exe"; fi
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o dist/packer-plugin-etcd${EXT}
 
-      - name: Compress binary
+      - name: Copy support files
+        run: cp README.md LICENSE dist/
+
+      - name: Create zip archive
         run: |
           cd dist
-          tar -czf packer-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz packer-${{ matrix.goos }}-${{ matrix.goarch }}
+          EXT=""
+          if [ "${{ matrix.goos }}" == "windows" ]; then EXT=".exe"; fi
+          FILENAME="Packer-plugin-etcd_${{ steps.version.outputs.tag_version }}_x5.0_${{ matrix.goos }}_${{ matrix.goarch }}.zip"
+          zip "$FILENAME" packer-plugin-etcd${EXT} README.md LICENSE
+          echo "FILENAME=$FILENAME" >> $GITHUB_ENV
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: packer-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: dist/packer-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz
+          path: dist/${{ env.FILENAME }}
 
   release:
     needs: build
@@ -50,10 +63,15 @@ jobs:
         with:
           path: ./dist
 
+      - name: Flatten artifacts for release
+        run: |
+          mkdir -p release
+          find dist -name '*.zip' -exec cp {} release/ \;
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          files: dist/**/*.tar.gz
+          files: release/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
