@@ -1,84 +1,169 @@
-# Packer Plugin ETCD
+# packer-plugin-etcd
 
-This Packer plugin is used to interact with ETCDv3 and ETCDv2 (WIP).
+A [Packer](https://www.packer.io/) plugin for reading from and writing to an already configured [etcd](https://etcd.io/) cluster or single instance. This plugin enables Packer workflows to interact with etcd for retrieving or storing data during image builds. Useful for dynamic configuration, distributed state sharing, or secrets management.
 
-# Usage
-Configure the packer template to require the required release version of this plugin. 
+> **Note:** This plugin does **not** provision or configure etcd clusters. It assumes you already have an accessible etcd instance.
+
+## Usage
+
+Configure the Packer template to require the desired release version of this plugin. 
 
 For example:
 
 ```hcl
 packer {
   required_plugins {
-    etcdv3 = {
-      version = "0.1.1"
+    etcd = {
+      version = ">= 0.1.1"
       source  = "github.com/ravin66/etcdv3"
     }
   }
 }
 ```
 
-Initialise the packer template using `init` to install the plug in
+Initialize the Packer template using `init` to install the plugin:
 
-```
+```sh
 packer init <name of template>.pkr.hcl
 ```
 
-Currently, this plugin has a provisioner and post-processor which can be used.  At this stage the plugin doesn't do auth but this will be fixed shortly.
+Alternatively, you can install the plugin directly using a local path:
 
-Create keys:
-```hcl
-provisioner "etcdv3-etcd" {
-    endpoint = "localhost:2379"
-    key      = "/test/Provisioner"
-    value    = "This is a provsioner key"
-    method   = "put"
-}
-
-  post-processor "etcdv3-etcd" {
-    endpoint = "localhost:2379"
-    key      = "/test/post-process"
-    value    = "This is a post process key"
-    method   = "put"
-  }
+```sh
+packer plugins install --path "<path>\Packer-plugin-etcd_v0.0.2_x5.0_linux_amd64" "github.com/ravin66/etcd"
 ```
 
-Get keys:
-```hcl
-provisioner "etcdv3-etcd" {
-    endpoint = "localhost:2379"
-    key      = "/test/Provisioner"
-    value    = "This is a provsioner key"
-    method   = "get"
-}
+## Authentication
 
-  post-processor "etcdv3-etcd" {
-    endpoint = "localhost:2379"
-    key      = "/test/post-process"
-    value    = "This is a post process key"
-    method   = "get"
-  }
+Both etcd v3 and v2 support authentication with Packer. This can be configured via environment variables or in the HCL settings.
+
+> **Note:** If you configure both the username and password in environment variables and in HCL, the HCL configuration will take precedence.
+
+The following environment variables can be set in your build environment:
+
+- `ETCD_USERNAME`: etcd username
+- `ETCD_PASSWORD`: etcd password
+
+For example, on Linux/macOS:
+
+```sh
+export ETCD_USERNAME=your-username
+export ETCD_PASSWORD=your-password
 ```
 
-Delete keys: 
-```hcl
-provisioner "etcdv3-etcd" {
-    endpoint = "localhost:2379"
-    key      = "/test/Provisioner"
-    value    = "This is a provsioner key"
-    method   = "delete"
-}
+Or on Windows:
 
-  post-processor "etcdv3-etcd" {
-    endpoint = "localhost:2379"
-    key      = "/test/post-process"
-    value    = "This is a post process key"
-    method   = "delete"
-  }
+```sh
+set ETCD_USERNAME=your-username
+set ETCD_PASSWORD=your-password
 ```
 
-Current this is all the plugin can do.  There are plans to expand on the above.
+**HCL Example:**
+```hcl
+provisioner "etcd-etcdv3" {
+  endpoint = "http://localhost:2379"
+  key      = "post-processor"
+  value    = "127.0.0.1"
+  username = "your-username"
+  password = "your-password"
+  method   = "put"
+}
+```
 
-# Development
+## ETCD API V3
 
-TBC
+The etcd v3 client currently supports provisioner and post-processor components. Expansion to other areas is planned.
+
+### Create keys:
+```hcl
+provisioner "etcd-etcdv3" {
+  endpoint = "http://localhost:2379"
+  key      = "post-processor"
+  value    = "127.0.0.1"
+  method   = "put"
+}
+
+post-processor "etcd-etcdv3" {
+  endpoint = "http://localhost:2379"
+  key      = "post-processor"
+  value    = "127.0.0.1"
+  method   = "put"
+}
+```
+
+### Get keys:
+```hcl
+provisioner "etcd-etcdv3" {
+  endpoint = "http://localhost:2379"
+  key      = "post-processor"
+  method   = "get"
+}
+
+post-processor "etcd-etcdv3" {
+  endpoint = "http://localhost:2379"
+  key      = "post-processor"
+  method   = "get"
+}
+```
+
+### Delete keys: 
+```hcl
+provisioner "etcd-etcdv3" {
+  endpoint = "http://localhost:2379"
+  key      = "post-processor"
+  method   = "delete"
+}
+
+post-processor "etcd-etcdv3" {
+  endpoint = "http://localhost:2379"
+  key      = "post-processor"
+  method   = "delete"
+}
+```
+
+## ETCD API V2
+
+Currently, the etcd v2 client only has the post-processor configured. Expansion to other areas is planned.
+
+### Create keys:
+```hcl
+post-processor "etcd-etcdv2" {
+  endpoint = "http://localhost:2379"
+  key      = "post-processor"
+  value    = "127.0.0.1"
+  method   = "put"
+}
+```
+
+### Get keys:
+```hcl
+post-processor "etcd-etcdv2" {
+  endpoint = "http://localhost:2379"
+  key      = "post-processor"
+  method   = "get"
+}
+```
+
+### Delete keys:
+```hcl
+post-processor "etcd-etcdv2" {
+  endpoint = "http://localhost:2379"
+  key      = "post-processor"
+  method   = "delete"
+}
+```
+
+Currently, this is all the plugin can do. There are plans to expand on the above.
+
+## Prerequisites
+
+- An already running and accessible etcd cluster or single instance.
+- No additional dependencies required other than etcd being reachable.
+
+## License
+
+This project is open source and released under the [MIT License](LICENSE).
+
+## Development
+
+*Contributions are welcome!*
