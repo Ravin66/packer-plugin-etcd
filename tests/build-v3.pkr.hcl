@@ -8,7 +8,7 @@ packer {
 }
 
 locals {
-  etcdhost = "http://192.168.0.13:2379"
+  etcdhost = "http://localhost:2379"
 }
 
 source "null" "basic-example" {
