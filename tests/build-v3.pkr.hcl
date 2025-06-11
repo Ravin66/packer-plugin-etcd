@@ -1,7 +1,7 @@
 packer {
   required_plugins {
     etcd = {
-      version = "0.1.2"
+      version = ">=0.1.2"
       source  = "github.com/ravin66/etcd"
     }
   }
