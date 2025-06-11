@@ -57,6 +57,7 @@ func (p *PostProcessor) PostProcess(ctx context.Context, ui packersdk.Ui, source
 
 	cfg := etcdv3.EtcdOptions{
 		Endpoints: []string{p.config.Endpoint},
+		UseAuth:   false,
 	}
 
 	// Check to see if environment variables are set and override
@@ -74,8 +75,6 @@ func (p *PostProcessor) PostProcess(ctx context.Context, ui packersdk.Ui, source
 		cfg.UseAuth = true
 		cfg.Password = p.config.Password
 		cfg.Username = p.config.Username
-	} else {
-		cfg.UseAuth = false
 	}
 
 	cli, err := etcdv3.Connect(cfg)

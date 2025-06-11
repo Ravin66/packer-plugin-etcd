@@ -1,14 +1,14 @@
 packer {
   required_plugins {
     etcd = {
-      version = "0.1.2"
+      version = ">=0.1.2"
       source  = "github.com/ravin66/etcd"
     }
   }
 }
 
 locals {
-  etcdhost = "http://localhost:2379"
+  etcdhost = "http://192.168.0.13:2379"
 }
 
 source "null" "basic-example" {
