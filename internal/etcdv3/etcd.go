@@ -22,10 +22,10 @@ func Connect(config EtcdOptions) (*clientv3.Client, error) {
 		DialTimeout: 5 * time.Second,
 	}
 
-	if config.UseAuth == true && (config.Username != "" || config.Password != "") {
+	if config.UseAuth && (config.Username != "" || config.Password != "") {
 		cfg.Username = config.Username
 		cfg.Password = config.Password
-	} else if config.UseAuth == true && (config.Username == "" || config.Password == "") {
+	} else if config.UseAuth && (config.Username == "" || config.Password == "") {
 		log.Fatal("Use Auth has been set to true but no username or password provided.")
 	}
 
@@ -36,6 +36,14 @@ func Connect(config EtcdOptions) (*clientv3.Client, error) {
 	}
 
 	return cli, err
+}
+
+func Disconnect(cli *clientv3.Client) {
+	err := cli.Close()
+
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func Put(cli *clientv3.Client, key, value string) error {

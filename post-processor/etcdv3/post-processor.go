@@ -83,7 +83,12 @@ func (p *PostProcessor) PostProcess(ctx context.Context, ui packersdk.Ui, source
 		ui.Error("Failed to connect to etcd: " + err.Error())
 		return source, false, false, err
 	}
-	defer cli.Close()
+
+	defer etcdv3.Disconnect(cli)
+
+	if err != nil {
+		return source, false, false, err
+	}
 
 	switch strings.ToLower(p.config.Method) {
 	case "put":

@@ -23,10 +23,10 @@ func Connect(config EtcdOptions) (clientv2.KeysAPI, error) {
 		HeaderTimeoutPerRequest: 5 * time.Second,
 	}
 
-	if config.UseAuth == true && (config.Username != "" || config.Password != "") {
+	if config.UseAuth && (config.Username != "" || config.Password != "") {
 		cfg.Username = config.Username
 		cfg.Password = config.Password
-	} else if config.UseAuth == true && (config.Username == "" || config.Password == "") {
+	} else if config.UseAuth && (config.Username == "" || config.Password == "") {
 		log.Fatal("Use Auth has been set to true but no username or password provided.")
 	}
 

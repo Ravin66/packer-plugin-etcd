@@ -1,9 +1,4 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
-//go:generate packer-sdc mapstructure-to-hcl2 -type Config
-
-package postprocessor
+package provisioner
 
 import (
 	"context"
@@ -12,16 +7,13 @@ import (
 	"strings"
 
 	"github.com/hashicorp/hcl/v2/hcldec"
-	"github.com/hashicorp/packer-plugin-sdk/common"
-	packersdk "github.com/hashicorp/packer-plugin-sdk/packer"
+	"github.com/hashicorp/packer-plugin-sdk/packer"
 	"github.com/hashicorp/packer-plugin-sdk/template/config"
 	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
 	"github.com/ravin66/packer-plugin-etcd/internal/etcdv2"
 )
 
 type Config struct {
-	common.PackerConfig `mapstructure:",squash"`
-
 	Endpoint string `mapstructure:"endpoint"`
 	Key      string `mapstructure:"key"`
 	Value    string `mapstructure:"value"`
@@ -32,15 +24,17 @@ type Config struct {
 	ctx interpolate.Context
 }
 
-type PostProcessor struct {
+type Provisioner struct {
 	config Config
 }
 
-func (p *PostProcessor) ConfigSpec() hcldec.ObjectSpec { return p.config.FlatMapstructure().HCL2Spec() }
+func (p *Provisioner) ConfigSpec() hcldec.ObjectSpec {
+	return p.config.FlatMapstructure().HCL2Spec()
+}
 
-func (p *PostProcessor) Configure(raws ...interface{}) error {
+func (p *Provisioner) Prepare(raws ...interface{}) error {
 	err := config.Decode(&p.config, &config.DecodeOpts{
-		PluginType:         "packer.post-processor.etcd",
+		PluginType:         "packer.provisioner.etcd",
 		Interpolate:        true,
 		InterpolateContext: &p.config.ctx,
 		InterpolateFilter: &interpolate.RenderFilter{
@@ -53,7 +47,7 @@ func (p *PostProcessor) Configure(raws ...interface{}) error {
 	return nil
 }
 
-func (p *PostProcessor) PostProcess(ctx context.Context, ui packersdk.Ui, source packersdk.Artifact) (packersdk.Artifact, bool, bool, error) {
+func (p *Provisioner) Provision(_ context.Context, ui packer.Ui, _ packer.Communicator, generatedData map[string]interface{}) error {
 
 	cfg := etcdv2.EtcdOptions{
 		Endpoints: []string{p.config.Endpoint},
@@ -71,10 +65,20 @@ func (p *PostProcessor) PostProcess(ctx context.Context, ui packersdk.Ui, source
 	}
 
 	// Check if the username is configured in packer.  This will override the environment variable.
+	// check if the username is configured in packer.  This will override the environment variable
 	if p.config.Username != "" {
 		cfg.UseAuth = true
-		cfg.Password = p.config.Password
 		cfg.Username = p.config.Username
+	}
+
+	if p.config.Password != "" {
+		cfg.UseAuth = true
+		cfg.Password = p.config.Password
+	}
+
+	if cfg.UseAuth && (p.config.Password == "" || p.config.Username == "") {
+		ui.Error("Authentication is set to True, but there is no username or password provided.")
+		return nil
 	}
 
 	// Connect to etcdv2
@@ -90,7 +94,7 @@ func (p *PostProcessor) PostProcess(ctx context.Context, ui packersdk.Ui, source
 
 		if err != nil {
 			ui.Error("Failed to set key: " + err.Error())
-			return source, false, false, err
+			return err
 		}
 
 		ui.Message("Successfully set key: " + p.config.Key + " to value: " + p.config.Value)
@@ -101,7 +105,7 @@ func (p *PostProcessor) PostProcess(ctx context.Context, ui packersdk.Ui, source
 		val, err := etcdv2.Get(eApi, p.config.Key)
 		if err != nil {
 			ui.Error("Failed to get value: " + err.Error())
-			return source, false, false, err
+			return err
 		}
 		ui.Message("Value retrieved: " + val)
 
@@ -109,15 +113,16 @@ func (p *PostProcessor) PostProcess(ctx context.Context, ui packersdk.Ui, source
 		err := etcdv2.Del(eApi, p.config.Key)
 		if err != nil {
 			ui.Error("Failed to delete key: " + err.Error())
-			return source, false, false, err
+			return err
 		}
 		ui.Message("Successfully deleted key: " + p.config.Key)
 
 	default:
 		err := fmt.Errorf("unsupported method: %s", p.config.Method)
 		ui.Error(err.Error())
-		return source, false, false, err
+		return err
 	}
 
-	return source, true, true, nil
+	return nil
+
 }

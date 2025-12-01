@@ -265,8 +265,6 @@ go.etcd.io/etcd/client/pkg/v3 v3.5.21 h1:lPBu71Y7osQmzlflM9OfeIV2JlmpBjqBNlLtcoB
 go.etcd.io/etcd/client/pkg/v3 v3.5.21/go.mod h1:BgqT/IXPjK9NkeSDjbzwsHySX3yIle2+ndz28nVsjUs=
 go.etcd.io/etcd/client/v2 v2.305.11 h1:ZqdKLNJnWpE3bUaaj3XZ5xWyCi+7Vspgk9E0hlIBguE=
 go.etcd.io/etcd/client/v2 v2.305.11/go.mod h1:vX2j5tMynwOateY6BfVmLol3gYOIkbhqjs/BqRsdIOw=
-go.etcd.io/etcd/client/v2 v2.305.21 h1:eLiFfexc2mE+pTLz9WwnoEsX5JTTpLCYVivKkmVXIRA=
-go.etcd.io/etcd/client/v2 v2.305.21/go.mod h1:OKkn4hlYNf43hpjEM3Ke3aRdUkhSl8xjKjSf8eCq2J8=
 go.etcd.io/etcd/client/v3 v3.5.21 h1:T6b1Ow6fNjOLOtM0xSoKNQt1ASPCLWrF9XMHcH9pEyY=
 go.etcd.io/etcd/client/v3 v3.5.21/go.mod h1:mFYy67IOqmbRf/kRUvsHixzo3iG+1OF2W2+jVIQRAnU=
 go.uber.org/atomic v1.7.0 h1:ADUqmZGgLDDfbSL9ZmPxKTybcoEYHgpYfELNoN+7hsw=
